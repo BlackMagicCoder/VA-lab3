@@ -89,6 +89,9 @@ $ mvn compile quarkus:dev
 
 The application can be packaged using:
 ```shell script
+$ docker-compose up -d   
+``` 
+```shell script
 $ mvn package
 ```
 It produces the `verteilte-anwendungen-redis-1.0.0-SNAPSHOT-runner.jar` file in the `target/` directory.
