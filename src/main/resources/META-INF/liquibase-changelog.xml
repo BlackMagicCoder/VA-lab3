@@ -56,4 +56,57 @@
         </insert>
     </changeSet>
 
+    <!-- Changeset für die Bestellungen -->
+    <changeSet id="verteilte-anwendungen-0.0.3" author="Cedric.Arnhold@Student.HTW-Berlin.de">
+        <!-- Tabelle für Bestellungen -->
+        <createTable tableName="ORDERS">
+            <column name="ID" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="USER_ID" type="INT">
+                <constraints nullable="false" foreignKeyName="FK_ORDER_USER" references="USER(ID)" />
+            </column>
+            <column name="TOTAL" type="DECIMAL(10, 2)">
+                <constraints nullable="false" />
+            </column>
+            <column name="ORDER_DATE" type="timestamp" defaultValueComputed="current_timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="CREATED_AT" type="timestamp" defaultValueComputed="current_timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="MODIFIED_AT" type="timestamp" defaultValueComputed="current_timestamp">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        
+        <!-- Tabelle für Bestellungspositionen -->
+        <createTable tableName="ORDER_ITEM">
+            <column name="ID" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="ORDER_ID" type="INT">
+                <constraints nullable="false" foreignKeyName="FK_ITEM_ORDER" references="ORDERS(ID)" />
+            </column>
+            <column name="PRODUCT_ID" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="PRODUCT_NAME" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="COUNT" type="INT">
+                <constraints nullable="false" />
+            </column>
+            <column name="PRICE" type="DECIMAL(10, 2)">
+                <constraints nullable="false" />
+            </column>
+            <column name="CREATED_AT" type="timestamp" defaultValueComputed="current_timestamp">
+                <constraints nullable="false" />
+            </column>
+            <column name="MODIFIED_AT" type="timestamp" defaultValueComputed="current_timestamp">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
