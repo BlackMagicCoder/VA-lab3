@@ -24,6 +24,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.logging.Logger;
+import jakarta.validation.Valid;
 
 import de.berlin.htw.boundary.dto.Basket;
 import de.berlin.htw.boundary.dto.Item;
@@ -142,7 +143,7 @@ public class BasketResource {
     @APIResponse(responseCode = "501", description = "Not Implemented")
     public Response addItem(
             @Parameter(description = "ID of the product", required = true) @PathParam("productId") final String productId,
-            @Parameter(description = "The item to add in the basket", required = true) final Item item) {
+            @Parameter(description = "The item to add in the basket", required = true) @Valid final Item item) {
     	logger.info(context.getUserPrincipal().getName() 
     			+ " is calling " + uri.getAbsolutePath());
     	

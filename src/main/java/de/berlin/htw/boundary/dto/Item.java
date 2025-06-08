@@ -1,29 +1,25 @@
 package de.berlin.htw.boundary.dto;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 /**
  * @author Alexander Stanik [alexander.stanik@htw-berlin.de]
  */
 public class Item {
 
-    @NotNull(message = "Produktname darf nicht null sein")
+    @NotBlank(message = "Produktname darf nicht null sein")
     @Size(max = 255, message = "Produktname darf nicht länger als 255 Zeichen sein")
     private String productName;
     
-    @NotNull(message = "Produktnummer darf nicht null sein")
+    @NotBlank(message = "Produktnummer darf nicht null sein")
     @Pattern(regexp = "[0-9]-[0-9]-[0-9]-[0-9]-[0-9]-[0-9]", message = "Produktnummer muss aus 6 Zahlen bestehen, die durch Bindestriche getrennt sind")
     private String productId;
     
-    @NotNull(message = "Anzahl darf nicht null sein")
+    @NotEmpty(message = "Anzahl darf nicht null sein")
     @Min(value = 1, message = "Anzahl muss mindestens 1 sein")
     private Integer count;
     
-    @NotNull(message = "Preis darf nicht null sein")
+    @NotEmpty(message = "Preis darf nicht null sein")
     @Min(value = 10, message = "Preis muss mindestens 10 Euro betragen")
     @Max(value = 100, message = "Preis darf maximal 100 Euro betragen")
     private Float price;
