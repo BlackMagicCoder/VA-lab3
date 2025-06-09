@@ -61,6 +61,7 @@
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists schemaName="VA_APP" tableName="ORDERS"/>
+                <tableExists schemaName="VA_APP" tableName="ORDER_ITEM"/>
             </not>
         </preConditions>
         <!-- Tabelle für Bestellungen -->
