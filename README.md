@@ -97,3 +97,7 @@ $ mvn package
 It produces the `verteilte-anwendungen-redis-1.0.0-SNAPSHOT-runner.jar` file in the `target/` directory.
 
 The application is now runnable using `$ java -jar target/verteilte-anwendungen-redis-1.0.0-SNAPSHOT-runner.jar`.
+
+
+Hardcodierung:
+Weder Umgebungsvariablen noch application.properties oder andere Konfigurationsdateien beeinflussen das Verhalten. Soll der Wert geändert werden, muss man den Quellcode editieren und neu bauen.
