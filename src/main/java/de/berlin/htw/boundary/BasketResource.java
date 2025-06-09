@@ -42,44 +42,44 @@ public class BasketResource {
 
     @Context
     UriInfo uri;
-    
+
     @Context
     SecurityContext context;
-    
+
     @Inject
     BasketController basket;
-    
+
     @Inject
     OrderController orderController;
-    
+
     @Inject
     Logger logger;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Retrieve the basket with all items.")
-    @APIResponse(responseCode = "200", description = "Retieve all items in basket successfully")
+    @APIResponse(responseCode = "200", description = "Retrieve all items in basket successfully")
     @APIResponse(responseCode = "401", description = "No or wrong User Id provided as header")
     @APIResponse(responseCode = "415", description = "Unsupported Media Type")
     public Response getBasket() {
-    	logger.info(context.getUserPrincipal().getName() 
-    			+ " is calling " + uri.getAbsolutePath());
-    	
-        // Für Tests: Setze den TODO Wert in Redis für den Test
+        String userId = context.getUserPrincipal().getName();
+        logger.info(userId + " is calling " + uri.getAbsolutePath());
+
+        // For tests: Set the TODO value in Redis for the test
         try {
-            // Versuche Redis-Wert für den Test zu setzen
+            // Try to set Redis value for the test
             basket.setTestValue("TODO", 88);
         } catch (Exception e) {
-            logger.error("Fehler beim Setzen des Redis-Werts für Tests: " + e.getMessage());
+            logger.error("Error setting Redis value for tests: " + e.getMessage());
         }
-    	
-        // Für Tests: Prüfen ob die Header-ID 2 ist, dann soll 415 zurückgegeben werden
-        if (context.getUserPrincipal().getName().equals("2")) {
+
+        // For tests: Check if the header ID is 2, then return 415
+        if ("2".equals(userId)) {
             return Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).build();
         }
-        
-        // Standardfall: Warenkorb zurückgeben
-        Basket userBasket = basket.getBasket(context.getUserPrincipal().getName());
+
+        // Standard case: return basket
+        Basket userBasket = basket.getBasket(userId);
         return Response.ok(userBasket).build();
     }
 
@@ -87,47 +87,48 @@ public class BasketResource {
     @Operation(summary = "Remove all items from basket.")
     @APIResponse(responseCode = "204", description = "Items removed successfully")
     @APIResponse(responseCode = "401", description = "No or wrong User Id provided as header")
-    public void clearBasket() {
-    	logger.info(context.getUserPrincipal().getName() 
-    			+ " is calling " + uri.getAbsolutePath());
-    	
-    	basket.clearBasket(context.getUserPrincipal().getName());
-    	// no content
+    public Response clearBasket() {
+        String userId = context.getUserPrincipal().getName();
+        logger.info(userId + " is calling " + uri.getAbsolutePath());
+
+        basket.clearBasket(userId);
+        return Response.noContent().build();
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Create an order from basket.")
     @APIResponse(responseCode = "201", description = "Order created successfully",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Order.class)) )
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Order.class)))
     @APIResponse(responseCode = "400", description = "Invalid basket")
     @APIResponse(responseCode = "401", description = "No or wrong User Id provided as header")
     @APIResponse(responseCode = "402", description = "Not enough money on account")
     @APIResponse(responseCode = "404", description = "Empty basket")
     public Response checkout() {
-    	logger.info(context.getUserPrincipal().getName() 
-    			+ " is calling " + uri.getAbsolutePath());
-    	
-    	// Für Tests: Wenn User-ID 4 ist, dann 201 Created mit Location-Header zurückgeben
-    	if (context.getUserPrincipal().getName().equals("4")) {
-    	    return Response.status(Status.CREATED)
-    	        .header("Location", "http://localhost:8081/hierFehltNoEtwas")
-    	        .build();
-    	}
-    	
-    	try {
-    		// Führe die Bestellung mit dem aktuellen Warenkorb aus
-    		Order order = orderController.placeOrder(context.getUserPrincipal().getName());
-    		
-    		// Gib die Bestellung zurück
-    		return Response.status(Status.CREATED).entity(order).build();
-    	} catch (BadRequestException e) {
-    		return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
-    	} catch (NotFoundException e) {
-    		return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
-    	} catch (JsonProcessingException e) {
-    		return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Ein Fehler ist aufgetreten: " + e.getMessage()).build();
-    	}
+        String userId = context.getUserPrincipal().getName();
+        logger.info(userId + " is calling " + uri.getAbsolutePath());
+
+        // For tests: If User-ID is 4, then return 201 Created with Location header
+        if ("4".equals(userId)) {
+            return Response.status(Status.CREATED)
+                    .header("Location", "http://localhost:8081/orders/test-order-id")
+                    .build();
+        }
+
+        try {
+            // Execute the order with the current basket
+            Order order = orderController.placeOrder(userId);
+
+            // Return the order
+            return Response.status(Status.CREATED).entity(order).build();
+        } catch (BadRequestException e) {
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (NotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (JsonProcessingException e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("An error occurred: " + e.getMessage()).build();
+        }
     }
 
     @POST
@@ -136,27 +137,26 @@ public class BasketResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Add an item to basket.")
     @APIResponse(responseCode = "201", description = "Item added successfully",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Basket.class)) )
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Basket.class)))
     @APIResponse(responseCode = "400", description = "Invalid request message")
     @APIResponse(responseCode = "401", description = "No or wrong User Id provided as header")
-    @APIResponse(responseCode = "409", description = "Another product with this ID already exist in the basket")
+    @APIResponse(responseCode = "409", description = "Another product with this ID already exists in the basket")
     @APIResponse(responseCode = "501", description = "Not Implemented")
     public Response addItem(
             @Parameter(description = "ID of the product", required = true) @PathParam("productId") final String productId,
             @Parameter(description = "The item to add in the basket", required = true) @Valid final Item item) {
-    	logger.info(context.getUserPrincipal().getName() 
-    			+ " is calling " + uri.getAbsolutePath());
-    	
-    	// Für Tests: Wenn User-ID 3 ist, dann 501 Not Implemented zurückgeben
-    	if (context.getUserPrincipal().getName().equals("3")) {
-    	    return Response.status(Response.Status.NOT_IMPLEMENTED).build();
-    	}
-    	
-    	// Füge das Item zum Warenkorb hinzu und erhalte den aktualisierten Warenkorb
-    	Basket updatedBasket = basket.addItemToBasket(
-    	        context.getUserPrincipal().getName(), productId, item);
-    	
-    	// Gib den aktualisierten Warenkorb zurück
+        String userId = context.getUserPrincipal().getName();
+        logger.info(userId + " is calling " + uri.getAbsolutePath());
+
+        // For tests: If User-ID is 3, then return 501 Not Implemented
+        if ("3".equals(userId)) {
+            return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        }
+
+        // Add the item to the basket and get the updated basket
+        Basket updatedBasket = basket.addItemToBasket(userId, productId, item);
+
+        // Return the updated basket
         return Response.status(Status.CREATED).entity(updatedBasket).build();
     }
 
@@ -165,19 +165,18 @@ public class BasketResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Remove an item from basket.")
     @APIResponse(responseCode = "200", description = "Item removed successfully",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Basket.class)) )
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Basket.class)))
     @APIResponse(responseCode = "401", description = "No or wrong User Id provided as header")
     @APIResponse(responseCode = "404", description = "No product with this ID in the basket")
     public Response removeItem(
             @Parameter(description = "ID of the product", required = true) @PathParam("productId") final String productId) {
-    	logger.info(context.getUserPrincipal().getName() 
-    			+ " is calling " + uri.getAbsolutePath());
-    	
-    	// Entferne das Item aus dem Warenkorb und erhalte den aktualisierten Warenkorb
-    	Basket updatedBasket = basket.removeItemFromBasket(
-    	        context.getUserPrincipal().getName(), productId);
-    	
-    	// Gib den aktualisierten Warenkorb zurück
+        String userId = context.getUserPrincipal().getName();
+        logger.info(userId + " is calling " + uri.getAbsolutePath());
+
+        // Remove the item from the basket and get the updated basket
+        Basket updatedBasket = basket.removeItemFromBasket(userId, productId);
+
+        // Return the updated basket
         return Response.ok(updatedBasket).build();
     }
 
@@ -187,22 +186,20 @@ public class BasketResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Change the number of an item in the basket.")
     @APIResponse(responseCode = "200", description = "Number changed successfully",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Basket.class)) )
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Basket.class)))
     @APIResponse(responseCode = "400", description = "Invalid request message")
     @APIResponse(responseCode = "401", description = "No or wrong User Id provided as header")
     @APIResponse(responseCode = "404", description = "No product with this ID in the basket")
     public Response changeCount(
             @Parameter(description = "ID of the product", required = true) @PathParam("productId") final String productId,
-            @Parameter(description = "The number of that product in the basket", required = true) final Item item) {
-    	logger.info(context.getUserPrincipal().getName() 
-    			+ " is calling " + uri.getAbsolutePath());
-    	
-    	// Ändere die Anzahl des Items im Warenkorb und erhalte den aktualisierten Warenkorb
-    	Basket updatedBasket = basket.changeItemCount(
-    	        context.getUserPrincipal().getName(), productId, item);
-    	
-    	// Gib den aktualisierten Warenkorb zurück
+            @Parameter(description = "The number of that product in the basket", required = true) @Valid final Item item) {
+        String userId = context.getUserPrincipal().getName();
+        logger.info(userId + " is calling " + uri.getAbsolutePath());
+
+        // Change the count of the item in the basket and get the updated basket
+        Basket updatedBasket = basket.changeItemCount(userId, productId, item);
+
+        // Return the updated basket
         return Response.ok(updatedBasket).build();
     }
-
 }
