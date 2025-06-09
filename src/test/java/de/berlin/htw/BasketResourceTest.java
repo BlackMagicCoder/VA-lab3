@@ -16,7 +16,6 @@ class BasketResourceTest {
     @Inject
     protected RedisDataSource redisDS;
 
-    // Your existing tests
     @Test
     void testGetBasket() {
         ValueCommands<String, Integer> countCommands = redisDS.value(Integer.class);
@@ -57,7 +56,7 @@ class BasketResourceTest {
     }
 
 
-    // New tests for additional functionality
+    // NEW tests for additional functionality
     @Test
     void testClearBasket() {
         given()
@@ -130,4 +129,17 @@ class BasketResourceTest {
                 .log().all()
                 .statusCode(401);
     }
+
+    @Test
+    void testNoUserIdHeader() {
+        // Test accessing basket without X-User-Id header
+        given()
+                .log().all()
+                .when()
+                .get("/basket")
+                .then()
+                .log().all()
+                .statusCode(401);
+    }
+
 }
