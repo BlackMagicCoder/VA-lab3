@@ -29,7 +29,7 @@ public class Item {
      */
     
     @NotBlank(message = "Produktnummer darf nicht null sein")
-    @Pattern(regexp = "[0-9]-[0-9]-[0-9]-[0-9]-[0-9]-[0-9]", message = "Produktnummer muss aus 6 Zahlen bestehen, die durch Bindestriche getrennt sind")
+    @Pattern(regexp = "^\\d+(?:-\\d+){5}$", message = "Produktnummer muss aus 6 Zahlen bestehen, die durch Bindestriche getrennt sind")
     private String productId;
 
     /**
