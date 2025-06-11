@@ -158,7 +158,10 @@ public class BasketController {
      * @throws ClientErrorException wenn das Produkt bereits im Warenkorb ist (Status 409).
      * @throws WebApplicationException bei Serialisierungsfehlern.
      */
-    public Basket addItemToBasket(String userId, String productId, @NotNull @Valid Item item) {
+    public Basket addItemToBasket(
+        final String userId,
+        final String productId,
+        @NotNull @Valid final Item item) {
         // Konsistenzprüfung: Produkt-ID im Pfad muss mit der im Request-Body übereinstimmen
         if (!productId.equals(item.getProductId())) {
             throw new BadRequestException("Produktnummer im Pfad und im Item stimmen nicht überein");
@@ -182,15 +185,9 @@ public class BasketController {
             throw new BadRequestException("Nicht genügend Guthaben für diesen Artikel");
         }
 
-        // Prüfung der maximalen Artikelanzahl im Warenkorb (Aufgabe 2)
-        // Hier wird die SUMME der 'count' aller Items geprüft, nicht die Anzahl der unterschiedlichen Produkte.
-        Basket currentBasket = getBasket(userId); // Hole aktuellen Warenkorb um Gesamtanzahl zu prüfen
-        int currentTotalItemCount = currentBasket.getItems().stream()
-                .mapToInt(Item::getCount)
-                .sum();
-        
-        if (currentTotalItemCount + item.getCount() > 10) {
-            throw new BadRequestException("Der Warenkorb darf nicht mehr als 10 Artikel (Stückzahl) enthalten");
+        // Prüfung der maximalen Anzahl unterschiedlicher Artikel im Warenkorb (Aufgabe 2)
+        if (hashCommands.hlen(basketKey) >= MAX_ITEMS_IN_BASKET) {
+            throw new ClientErrorException("Der Warenkorb darf nicht mehr als " + MAX_ITEMS_IN_BASKET + " unterschiedliche Artikel enthalten.", Response.Status.CONFLICT);
         }
                 
         try {

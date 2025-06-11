@@ -16,6 +16,9 @@ class BasketResourceTest {
     @Inject
     protected RedisDataSource redisDS;
 
+    @Inject
+    protected de.berlin.htw.entity.dao.UserRepository userRepository;
+
     @Test
     void testGetBasket() {
         ValueCommands<String, Integer> countCommands = redisDS.value(Integer.class);
@@ -142,4 +145,59 @@ class BasketResourceTest {
                 .statusCode(401);
     }
 
+    @Test
+    @jakarta.transaction.Transactional
+    void testAddMoreThan10UniqueItems_shouldFail() {
+        final String userName = "max-item-user";
+
+        // User anlegen, damit Guthaben existiert.
+        de.berlin.htw.entity.dto.UserEntity user = userRepository.findByName(userName);
+        if (user == null) {
+            user = new de.berlin.htw.entity.dto.UserEntity();
+            user.setName(userName);
+            user.setBalance(1000.0f);
+            userRepository.persistUser(user);
+        } else {
+            // Wenn der User schon existiert, Guthaben zurücksetzen, um Teststabilität zu gewährleisten
+            user.setBalance(1000.0f);
+            userRepository.updateUserBalance(user);
+        }
+
+        final Integer userId = user.getId();
+
+        // Sicherstellen, dass der Warenkorb für diesen Test leer ist.
+        given().header("X-User-Id", userId).delete("/basket").then().statusCode(anyOf(is(204), is(404)));
+
+        // 10 verschiedene Artikel hinzufügen (sollte erfolgreich sein)
+        for (int i = 0; i < 10; i++) {
+            String productId = "1-2-3-4-5-" + i; // Erzeugt gültige IDs von ...-0 bis ...-9
+            de.berlin.htw.boundary.dto.Item item = new de.berlin.htw.boundary.dto.Item();
+            item.setProductId(productId);
+            item.setProductName("Test Item " + i);
+            item.setPrice(10.0f);
+            item.setCount(1);
+            given()
+                .header("X-User-Id", userId)
+                .contentType(ContentType.JSON)
+                .body(item)
+                .post("/basket/" + productId)
+                .then()
+                .statusCode(201);
+        }
+
+        // 11. Artikel hinzufügen (sollte fehlschlagen)
+        String eleventhProductId = "1-2-3-4-6-0"; // Eine andere, aber gültige Produkt-ID
+        de.berlin.htw.boundary.dto.Item eleventhItem = new de.berlin.htw.boundary.dto.Item();
+        eleventhItem.setProductId(eleventhProductId);
+        eleventhItem.setProductName("Test Item 11");
+        eleventhItem.setPrice(10.0f);
+        eleventhItem.setCount(1);
+        given()
+            .header("X-User-Id", userId)
+            .contentType(ContentType.JSON)
+            .body(eleventhItem)
+            .post("/basket/" + eleventhProductId)
+            .then()
+            .statusCode(409); // Erwartet 409 Conflict, da der Warenkorb voll ist.
+    }
 }

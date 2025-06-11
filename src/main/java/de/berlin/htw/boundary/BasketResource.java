@@ -78,7 +78,7 @@ public class BasketResource {
         // Ziehe stattdessen Build-Profile oder dedizierte Testumgebungen in Betracht.
         try {
             // Versuch, für den Test einen Redis-Wert zu setzen
-            // basket.setTestValue("TODO", 88);
+            // basket.setTestValue;
         } catch (Exception e) {
             logger.error("Error setting Redis value for tests: " + e.getMessage());
         }

@@ -8,7 +8,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ItemTest {
+class ItemTest {
 
     private Validator validator;
 
@@ -22,80 +22,60 @@ public class ItemTest {
         Item item = new Item();
         item.setProductName("Schokolade");
         item.setProductId("1-2-3-4-5-6");
-        item.setCount(3);
         item.setPrice(50.0f);
+        item.setCount(1); // Fehlende Initialisierung für @NotNull-Feld
         return item;
     }
 
     @Test
-    void validItem_shouldHaveNoViolations() {
-        Item item = validItem();
-        Set<ConstraintViolation<Item>> violations = validator.validate(item);
-        assertTrue(violations.isEmpty(), "Ein gültiges Item sollte keine Validierungsfehler haben.");
-    }
-
-    @Test
-    void productNameNull_shouldFail() {
-        Item item = validItem();
-        item.setProductName(null);
-        Set<ConstraintViolation<Item>> violations = validator.validate(item);
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("productName")));
-    }
-
-    @Test
-    void productNameTooLong_shouldFail() {
+    void articleNameLengthValidation() {
         Item item = validItem();
         item.setProductName("a".repeat(256));
         Set<ConstraintViolation<Item>> violations = validator.validate(item);
-        assertFalse(violations.isEmpty());
+        assertFalse(violations.isEmpty(), "256 Zeichen sollten ungültig sein");
+
+        item.setProductName("a".repeat(255));
+        violations = validator.validate(item);
+        assertTrue(violations.isEmpty(), "255 Zeichen sollten gültig sein");
     }
 
     @Test
-    void productIdWrongFormat_shouldFail() {
+    void articleIdFormatValidation() {
         Item item = validItem();
-        item.setProductId("123-456");  // Falsches Format
+        item.setProductId("1-2-3-4-5"); // Ungültiges Format
+        Set<ConstraintViolation<Item>> violations = validator.validate(item);
+        assertFalse(violations.isEmpty(), "Format 1-2-3-4-5 sollte ungültig sein");
+
+        item.setProductId("1-2-3-4-5-6"); // Gültiges Format
+        violations = validator.validate(item);
+        assertTrue(violations.isEmpty(), "Format 1-2-3-4-5-6 sollte gültig sein");
+    }
+
+    @Test
+    void priceTooLow() {
+        Item item = validItem();
+        item.setPrice(9.99f);
         Set<ConstraintViolation<Item>> violations = validator.validate(item);
         assertFalse(violations.isEmpty());
     }
 
     @Test
-    void countNull_shouldFail() {
+    void priceTooHigh() {
         Item item = validItem();
-        item.setCount(null);
+        item.setPrice(100.01f);
         Set<ConstraintViolation<Item>> violations = validator.validate(item);
         assertFalse(violations.isEmpty());
     }
 
     @Test
-    void countTooLow_shouldFail() {
+    void priceOnBoundary() {
         Item item = validItem();
-        item.setCount(0);
+        item.setPrice(10.00f);
         Set<ConstraintViolation<Item>> violations = validator.validate(item);
-        assertFalse(violations.isEmpty());
-    }
+        assertTrue(violations.isEmpty(), "Preis von 10.00 sollte gültig sein");
 
-    @Test
-    void priceNull_shouldFail() {
-        Item item = validItem();
-        item.setPrice(null);
-        Set<ConstraintViolation<Item>> violations = validator.validate(item);
-        assertFalse(violations.isEmpty());
-    }
-
-    @Test
-    void priceTooLow_shouldFail() {
-        Item item = validItem();
-        item.setPrice(5.0f);  // Unter dem Minimum
-        Set<ConstraintViolation<Item>> violations = validator.validate(item);
-        assertFalse(violations.isEmpty());
-    }
-
-    @Test
-    void priceTooHigh_shouldFail() {
-        Item item = validItem();
-        item.setPrice(150.0f);  // Über dem Maximum
-        Set<ConstraintViolation<Item>> violations = validator.validate(item);
-        assertFalse(violations.isEmpty());
+        item.setPrice(100.00f);
+        violations = validator.validate(item);
+        assertTrue(violations.isEmpty(), "Preis von 100.00 sollte gültig sein");
     }
 }

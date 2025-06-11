@@ -47,8 +47,8 @@ public class Item {
      */
     
     @NotNull(message = "Preis darf nicht null sein")
-    @Min(value = 10, message = "Preis muss mindestens 10 Euro betragen")
-    @Max(value = 100, message = "Preis darf maximal 100 Euro betragen")
+    @DecimalMin(value = "10.0", inclusive = true, message = "Preis muss mindestens 10 Euro betragen")
+    @DecimalMax(value = "100.0", inclusive = true, message = "Preis darf maximal 100 Euro betragen")
     private Float price;
 
     // Getter und Setter

@@ -45,12 +45,12 @@ public class UserRepository {
      * @param user Der zu aktualisierende Benutzer
      * @return Der aktualisierte Benutzer
      */
-    @Transactional
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     public UserEntity updateUserBalance(final UserEntity user) {
         return entityManager.merge(user);
     }
     
-    @Transactional
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void persistUser(final UserEntity user) {
         entityManager.persist(user);
     }
